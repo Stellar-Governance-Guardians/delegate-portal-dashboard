@@ -2,8 +2,9 @@
   "name": "delegate-portal-dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Read-only delegate and governance dashboard for Soroban DAOs: decoded proposals, published delegate formulas and execution risk from the pinned parser WASM and the governance-event-indexer GraphQL API.",
+  "description": "Read-only delegate and governance dashboard for Soroban DAOs: decode raw ScVals in the browser with the pinned parser WASM and read indexer health; proposal, delegate and impact pages are planned on the indexer's governance-v1 GraphQL API.",
   "license": "MIT",
+  "homepage": "https://stellar-governance-guardians.github.io/soroban-governance-parser/",
   "repository": {
     "type": "git",
     "url": "https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard.git"
