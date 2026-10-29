@@ -1,5 +1,7 @@
 name: ci
 
+# PR gate: OFFLINE and deterministic. No live indexer, no testnet and no
+# network fetch of pinned artifacts (they are vendored and hash-checked).
 on:
   pull_request:
   push:
@@ -15,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: required community files exist
+      - name: required files exist
         run: |
           missing=0
-          for f in SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md \
+          for f in LICENSE SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md \
                    .github/pull_request_template.md \
                    .github/ISSUE_TEMPLATE/bug_report.md \
                    .github/ISSUE_TEMPLATE/feature_request.md; do
@@ -29,15 +31,76 @@ jobs:
             echo "MISSING: CODEOWNERS"; missing=1
           fi
           test "$missing" -eq 0
+      # Charter rule 1: production code never references fixtures (the eslint
+      # no-restricted-imports rule is the same guard at lint time).
+      - name: no fixture imports in production code
+        run: |
+          if grep -rn 'tests/fixtures\|tests/recorded' app components lib --include='*.ts' --include='*.tsx'; then
+            echo "FAIL: production code references fixtures"; exit 1
+          fi
       - name: org namespace only
         run: |
-          bad=$(grep -rEoh 'https?://(api\.)?github\.com/(repos/)?[A-Za-z0-9_.-]+' --include='*.md' --include='*.json' --include='*.yml' --include='*.yaml' --include='*.toml' --include='*.graphql' . | sed 's|https://api\.github\.com/repos/|https://github.com/|' | grep -vE '^https?://github\.com/Stellar-Governance-Guardians$' || true)
+          # Tracked first-party files only; skip the dependency lockfile
+          # (third-party registry URLs, not ours). Organization repos are
+          # allowed; personal accounts never are.
+          bad=$(git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
+            | grep -zv 'package-lock\.json' \
+            | xargs -0 -r grep -Eoh 'https?://(api\.)?github\.com/(repos/)?[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?' 2>/dev/null \
+            | sed 's|https://api\.github\.com/repos/|https://github.com/|' \
+            | grep -vE '^https?://github\.com/(Stellar-Governance-Guardians(/[A-Za-z0-9_.-]+)?|script3|OpenZeppelin)$' || true)
           if [ -n "$bad" ]; then echo "FAIL: non-org GitHub URLs:"; echo "$bad"; exit 1; fi
       - name: no personal account names in tracked sources
         run: |
           # Name fragments keep this file from matching itself.
           n1='ojuotimi'; n2='932'; n3='dawnaurora'; n4='25'; n5='aigbagb'; n6='obila'
           names="${n1}${n2}|${n3}${n4}|${n5}${n6}"
-          if grep -rniE --exclude-dir=.git "$names" --include='*.md' --include='*.json' --include='*.yml' --include='*.yaml' --include='*.toml' . ; then
+          if git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
+            | xargs -0 -r grep -niE "$names" ; then
             echo "FAIL: personal account name in tracked sources"; exit 1
           fi
+      # Charter rule 5: no secrets, full history + worktree.
+      - name: gitleaks (no secrets, history + worktree)
+        run: |
+          docker run --rm -v "$PWD":/repo:ro zricethezav/gitleaks:v8.30.1 \
+            detect --source /repo --redact --no-banner --exit-code 1
+          docker run --rm -v "$PWD":/repo:ro zricethezav/gitleaks:v8.30.1 \
+            detect --source /repo --no-git --redact --no-banner --exit-code 1
+
+  quality:
+    name: typecheck / lint / unit / build / pins / claims
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Interface contract: pins must not drift (offline, deterministic).
+      - run: npm run check:pins
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: unit + component tests (real pinned WASM, no mocks)
+        run: npm run test:unit
+      - run: npm run build
+      # Charter rule 7: machine-checked README claims.
+      - name: claims ledger
+        run: bash scripts/check-claims.sh
+
+  e2e:
+    name: playwright (production server, INDEXER_URL unset)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

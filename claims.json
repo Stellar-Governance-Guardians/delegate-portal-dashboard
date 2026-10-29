@@ -1,0 +1,55 @@
+{
+  "$comment": "Claims ledger (charter rule 7). Every machine-checkable claim in README.md appears here with the exact command that verifies it. scripts/check-claims.sh runs each check offline; exit 0 = claim holds. Never add a claim whose check needs a live indexer to this file — live checks belong in the nightly tier.",
+  "claims": [
+    {
+      "id": "license-present",
+      "claim": "the repository is MIT licensed",
+      "statedIn": ["README.md"],
+      "check": { "cmd": "head -1 LICENSE | grep -qx 'MIT License'" }
+    },
+    {
+      "id": "three-pages-exist",
+      "claim": "three routes exist: /, /simulate and /status",
+      "statedIn": ["README.md"],
+      "check": {
+        "cmd": "test -s app/page.tsx && test -s app/simulate/page.tsx && test -s app/status/page.tsx"
+      }
+    },
+    {
+      "id": "pins-verified",
+      "claim": "the vendored parser WASM tarball and GraphQL SDL hash exactly as parser.lock and schema.lock say",
+      "statedIn": ["README.md"],
+      "check": { "cmd": "node scripts/check-pins.mjs" }
+    },
+    {
+      "id": "simulate-decodes-real-scval",
+      "claim": "/simulate decodes a real captured ScVal with the pinned WASM",
+      "statedIn": ["README.md"],
+      "check": {
+        "cmd": "node scripts/unpack-wasm.mjs >/dev/null && node -e \"const m=require('./generated/wasm/nodejs/sgp_parser_wasm.js');const v=JSON.parse(m.decode_scval_base64('AAAADwAAABBwcm9wb3NhbF9jcmVhdGVk'));if(v!=='proposal_created')process.exit(1)\""
+      }
+    },
+    {
+      "id": "no-fixture-imports",
+      "claim": "production code imports no fixtures or recorded responses",
+      "statedIn": ["README.md"],
+      "check": { "cmd": "! grep -rn 'tests/fixtures\\|tests/recorded' app components lib --include='*.ts' --include='*.tsx'" }
+    },
+    {
+      "id": "read-only-no-keys",
+      "claim": "the dashboard holds no wallet integration and no secrets",
+      "statedIn": ["README.md"],
+      "check": {
+        "cmd": "! grep -rniE 'freighter|@stellar/(freighter|wallet)|PRIVATE_KEY|SECRET_KEY' app components lib --include='*.ts' --include='*.tsx'"
+      }
+    },
+    {
+      "id": "org-namespace-only",
+      "claim": "documented repository links use the organization namespace only",
+      "statedIn": ["README.md"],
+      "check": {
+        "cmd": "! grep -rhoE 'https?://github\\.com/[A-Za-z0-9_.-]+' README.md | grep -vE '^https://github\\.com/(Stellar-Governance-Guardians|script3|OpenZeppelin)$'"
+      }
+    }
+  ]
+}
