@@ -1,0 +1,9 @@
+{
+  "$comment": "Pin for the parser WASM package (interface contract, D1). The asset is the GitHub Release asset, vendored at vendor/<asset filename> so offline builds/tests never fetch the network; sha256(vendored) must equal this value (scripts/check-pins.mjs, PR gate). Corroborated by the parser's releases/parser-wasm.lock.json at tag v0.1.0-alpha.1.",
+  "version": "0.1.0-alpha.1",
+  "assetUrl": "https://github.com/Stellar-Governance-Guardians/soroban-governance-parser/releases/download/v0.1.0-alpha.1/sgg-parser-wasm-0.1.0-alpha.1.tgz",
+  "sha256": "7b2eb9420f0cf0582d079f9603beb1e8548e1c7bac165724688cbae5b9237ecd",
+  "exportsUsed": [
+    "decode_scval_base64"
+  ]
+}
