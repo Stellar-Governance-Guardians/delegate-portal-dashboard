@@ -1,0 +1,17 @@
+# gitleaks configuration (charter rule 5: run gitleaks before every push).
+#
+# Extends the default ruleset. Allowlist entries must be verified false
+# positives or non-repository artifacts, scoped to the narrowest path. No
+# blanket exclusions over first-party source, fixtures or docs.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "local build artifacts that are never tracked (gitignored): dependencies, Next output and the unpacked pinned WASM"
+paths = [
+  '''^node_modules/''',
+  '''^\.next/''',
+  '''^generated/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
