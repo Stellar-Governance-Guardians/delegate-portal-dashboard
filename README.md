@@ -109,7 +109,7 @@ e2e/                 Playwright specs
 
 Data rules in force:
 
-- The indexer is the only data source. A missing or broken indexer is an error
+- The indexer is the dashboard's data source. A missing or broken indexer is an error
   state, never an empty table that reads as "no data".
 - Numbers are rendered exactly as the API returned them; nothing is rounded
   away or composited into a score.
