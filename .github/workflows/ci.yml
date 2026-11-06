@@ -1,11 +1,12 @@
 name: ci
 
-# PR gate: OFFLINE and deterministic. No live indexer, no testnet and no
+# PR gate: OFFLINE and deterministic. No live indexer, no testnet, and no
 # network fetch of pinned artifacts (they are vendored and hash-checked).
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -49,14 +50,14 @@ jobs:
             | sed 's|https://api\.github\.com/repos/|https://github.com/|' \
             | grep -vE '^https?://github\.com/(Stellar-Governance-Guardians(/[A-Za-z0-9_.-]+)?|script3|OpenZeppelin)$' || true)
           if [ -n "$bad" ]; then echo "FAIL: non-org GitHub URLs:"; echo "$bad"; exit 1; fi
-      - name: no personal account names in tracked sources
+      - name: no personal GitHub URLs in tracked sources
         run: |
-          # Name fragments keep this file from matching itself.
-          n1='ojuotimi'; n2='932'; n3='dawnaurora'; n4='25'; n5='aigbagb'; n6='obila'
-          names="${n1}${n2}|${n3}${n4}|${n5}${n6}"
+          # Organization and documented upstream namespaces are allowed.
           if git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
-            | xargs -0 -r grep -niE "$names" ; then
-            echo "FAIL: personal account name in tracked sources"; exit 1
+            | grep -zv 'package-lock\.json' \
+            | xargs -0 -r grep -Pni 'https?://(api\.)?github\.com/(?!Stellar-Governance-Guardians|script3|OpenZeppelin)' \
+            | grep -v '^\.github/workflows/ci\.yml:' ; then
+            echo "FAIL: non-org GitHub URL in tracked sources"; exit 1
           fi
       # Charter rule 5: no secrets, full history + worktree.
       - name: gitleaks (no secrets, history + worktree)

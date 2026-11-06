@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <Link href="/simulate">Simulate</Link>
             <Link href="/status">Status</Link>
+            <Link href="/delegates">Delegates</Link>
           </nav>
           <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
             Read-only. No wallet, no keys, no server-side secrets.

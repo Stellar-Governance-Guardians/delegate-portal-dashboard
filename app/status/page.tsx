@@ -1,26 +1,20 @@
-"use client";
-
-import { useEffect, useState } from 'react';
 import { loadIndexerHealth } from '@/lib/graphql';
+import { readPins } from '@/lib/pins';
 
 export const dynamic = 'force-dynamic';
 
-export default function StatusPage() {
-  const [health, setHealth] = useState<{ ok: boolean; reason?: string; health?: { lagLedgers: number; ledgerRetentionWindow: number; healthy: boolean } } | null>(null);
-
-  useEffect(() => {
-    ;(async () => {
-      const result = await loadIndexerHealth();
-      setHealth(result);
-    })();
-  }, []);
-
-  if (health === null) {
-    return <p>Indexer unavailable: loading...</p>;
-  }
-
+export default async function StatusPage() {
+  const health = await loadIndexerHealth();
+  const pins = readPins();
   return (
-    <div className="p-4">
+    <div className="space-y-4 p-4">
+      <h1 className="text-2xl font-semibold">Status</h1>
+      <section className="rounded border p-4" aria-labelledby="pins">
+        <h2 id="pins" className="font-semibold">Interface pins</h2>
+        <p className="mt-2 text-sm">Parser WASM {pins.parser.version}</p>
+        <p className="break-all text-sm">sha256: {pins.parser.sha256}</p>
+        <p className="break-all text-sm">schema commit: {pins.schema.commitSha}</p>
+      </section>
       {health.ok ? (
         <div>
           {health.health?.lagLedgers !== undefined && health.health?.lagLedgers !== null && (
@@ -34,7 +28,10 @@ export default function StatusPage() {
           )}
         </div>
       ) : (
-        <p>Indexer unavailable: {health.reason}</p>
+        <section role="alert" aria-labelledby="indexer-unavailable" className="rounded border p-4">
+          <h2 id="indexer-unavailable" className="font-semibold">Indexer data unavailable</h2>
+          <p className="mt-2">Indexer unavailable: {health.reason}</p>
+        </section>
       )}
     </div>
   );

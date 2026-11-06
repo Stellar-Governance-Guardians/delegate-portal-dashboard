@@ -1,4 +1,11 @@
-# delegate-portal-dashboard
+# Delegate Portal Dashboard
+
+[![CI](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Maintained by [Stellar Governance Guardians](https://github.com/Stellar-Governance-Guardians).
+Use [GitHub Issues](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues)
+for project discussion, bug reports, and contribution requests.
 
 Read-only delegate and governance dashboard for Soroban DAOs on Stellar: decode
 raw governance payloads in your browser with the pinned parser WASM, and read
@@ -25,7 +32,7 @@ fallback data, and explicit unavailable-indexer states — 25 unit/component and
 **Not built:** proposal, delegate and impact pages, `graphql-codegen`, and
 event/transaction decode. See "Honest limitations".
 
-## Status: app scaffold + `/simulate` + `/status` — data pages not built
+## Status: read-only app scaffold with `/simulate`, `/status`, and explicit data-page states
 
 This repository contains the application scaffold (Next.js 16 App Router,
 strict TypeScript, Tailwind, Vitest, Playwright), the pinned interface
@@ -88,7 +95,7 @@ secrets via gitleaks).
 | Artifact | Pin | Verified by |
 |---|---|---|
 | GraphQL SDL `governance-v1` | `schema.lock` — parser commit `ba3bf1a3…`, sha256 `cfbd85a8…` | `npm run check:pins` |
-| Parser WASM `v0.1.0-alpha.1` | `parser.lock` — GitHub Release asset, sha256 `7b2eb942…` | `npm run check:pins`, `scripts/unpack-wasm.mjs` |
+| Parser WASM `v0.1.0-alpha.2` | `parser.lock` — GitHub Release asset, sha256 `65193e43…` | `npm run check:pins`, `scripts/unpack-wasm.mjs` |
 
 Committed cross-repo references are content pins only. Nothing in `app/`,
 `components/` or `lib/` reads a sibling repository by relative path.
@@ -115,11 +122,17 @@ Data rules in force:
   away or composited into a score.
 - The app is read-only: no wallet, no signing, no keys, no server-side secrets.
 
+The dashboard is the presentation layer of the suite: the parser supplies the
+browser decoder, the indexer supplies GraphQL health and governance data, and
+this app renders explicit loading, unavailable, and error states instead of
+turning missing data into zeros.
+
 ## Honest limitations
 
 - Only `decode_scval_base64` from the pinned WASM is used. Event XDR,
   transaction-hash lookup, proposal call decoding and risk classification all
-  need parser WASM exports that ship with `v0.1.0-alpha.2` (not published yet).
+  need parser WASM exports that are present in the pinned `v0.1.0-alpha.2`
+  package but are not wired into this dashboard yet.
 - Codegen of typed GraphQL operations is deferred until the indexer exposes the
   full schema; today the one query and its response shape are hand-written and
   strictly validated in `lib/graphql.ts`.
@@ -129,8 +142,23 @@ Data rules in force:
 - Lighthouse accessibility scores have not been measured and are not claimed.
   The UI has landmarks, a skip link, visible focus, labelled controls, an
   `aria-live` result region and light/dark tokens; formal audit is pending.
-- No live-indexer page has been exercised end to end, because the indexer does
-  not expose GraphQL yet.
+- End-to-end live-indexer coverage is still pending. The indexer now exposes a
+  read-only `/graphql` endpoint, but this repository's tests deliberately use an
+  unavailable-indexer scenario and do not claim a deployed integration.
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Run the
+static checks and unit tests locally, keep the app read-only, and update the
+pin and claims files when an interface artifact changes. Report security issues
+through [SECURITY.md](SECURITY.md), not a public issue.
+
+## Community and contributors
+
+Project discussion happens in [GitHub Issues](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues)
+and pull requests.
+
+[![Contributors](https://contrib.rocks/image?repo=Stellar-Governance-Guardians/delegate-portal-dashboard)](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/graphs/contributors)
 
 ## License
 

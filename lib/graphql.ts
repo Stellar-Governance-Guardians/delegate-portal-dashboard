@@ -17,6 +17,22 @@ export interface IndexerHealth {
   healthy: boolean;
 }
 
+export interface IndexedEvent {
+  governor: string;
+  topics: string[];
+  ledger: number;
+  txHash: string;
+  contractId: string;
+  payload: unknown;
+  decoding: 'VERIFIED' | 'UNVERIFIED';
+  source: 'live' | 'fixture-replay';
+}
+
+export interface EventConnection {
+  edges: Array<{ cursor: string; node: IndexedEvent }>;
+  pageInfo: { hasNextPage: boolean; endCursor: string | null };
+}
+
 export class IndexerUnavailableError extends Error {
   override readonly name = 'IndexerUnavailableError';
 }
@@ -30,6 +46,13 @@ export const INDEXER_HEALTH_QUERY = `query IndexerHealth {
     ledgerRetentionWindow
     lagLedgers
     healthy
+  }
+}`;
+
+export const EVENTS_QUERY = `query Events($first: Int, $after: String) {
+  events(first: $first, after: $after) {
+    edges { cursor node { governor topics ledger txHash contractId payload decoding } }
+    pageInfo { hasNextPage endCursor }
   }
 }`;
 
@@ -73,6 +96,56 @@ function readInt(source: Record<string, unknown>, key: string): number {
     );
   }
   return value;
+}
+
+function readString(source: Record<string, unknown>, key: string): string {
+  const value = source[key];
+  if (typeof value !== 'string') throw new IndexerUnavailableError(`event.${key} is not a string.`);
+  return value;
+}
+
+export function parseEventConnection(body: unknown): EventConnection {
+  if (!isRecord(body)) throw new IndexerUnavailableError('GraphQL events response is not a JSON object.');
+  if (Array.isArray(body['errors']) && body['errors'].length > 0) {
+    throw new IndexerUnavailableError(`Indexer returned GraphQL errors: ${JSON.stringify(body['errors'])}`);
+  }
+  const data = body['data'];
+  if (!isRecord(data) || !isRecord(data['events'])) throw new IndexerUnavailableError('GraphQL response has no events object.');
+  const connection = data['events'];
+  const edges = connection['edges'];
+  const pageInfo = connection['pageInfo'];
+  if (!Array.isArray(edges) || !isRecord(pageInfo)) throw new IndexerUnavailableError('events has an invalid connection shape.');
+  return {
+    edges: edges.map((edge) => {
+      if (!isRecord(edge) || !isRecord(edge['node'])) throw new IndexerUnavailableError('events contains an invalid edge.');
+      const node = edge['node'];
+      const topics = node['topics'];
+      if (!Array.isArray(topics) || topics.some((topic) => typeof topic !== 'string')) throw new IndexerUnavailableError('event.topics is invalid.');
+      const decoding = node['decoding'];
+      if (decoding !== 'VERIFIED' && decoding !== 'UNVERIFIED') throw new IndexerUnavailableError('event.decoding is invalid.');
+      const payload = node['payload'];
+      if (!isRecord(payload) || (payload['source'] !== 'live' && payload['source'] !== 'fixture-replay')) {
+        throw new IndexerUnavailableError('event.payload.source is missing or invalid; provenance cannot be inferred.');
+      }
+      return {
+        cursor: readString(edge, 'cursor'),
+        node: {
+          governor: readString(node, 'governor'),
+          topics,
+          ledger: readInt(node, 'ledger'),
+          txHash: readString(node, 'txHash'),
+          contractId: readString(node, 'contractId'),
+          payload,
+          decoding,
+          source: payload['source'],
+        },
+      };
+    }),
+    pageInfo: {
+      hasNextPage: pageInfo['hasNextPage'] === true,
+      endCursor: pageInfo['endCursor'] === null ? null : readString(pageInfo, 'endCursor'),
+    },
+  };
 }
 
 /** Strict shape check against the vendored SDL — no coercion, no defaults. */
@@ -141,6 +214,26 @@ export async function fetchIndexerHealth(
     throw new IndexerUnavailableError('Indexer response is not valid JSON.');
   }
   return parseIndexerHealth(body);
+}
+
+export async function fetchIndexerEvents(indexerUrl: string | undefined, fetchImpl: typeof fetch = fetch): Promise<EventConnection> {
+  const url = parseIndexerUrl(indexerUrl);
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ query: EVENTS_QUERY, operationName: 'Events', variables: { first: 50 } }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      cache: 'no-store',
+    });
+  } catch (err) {
+    throw new IndexerUnavailableError(`Indexer request failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  if (!response.ok) throw new IndexerUnavailableError(`Indexer responded HTTP ${response.status} ${response.statusText}.`);
+  let body: unknown;
+  try { body = await response.json(); } catch { throw new IndexerUnavailableError('Indexer response is not valid JSON.'); }
+  return parseEventConnection(body);
 }
 
 export type IndexerHealthResult =
