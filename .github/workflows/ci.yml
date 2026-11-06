@@ -54,6 +54,7 @@ jobs:
         run: |
           # Organization and documented upstream namespaces are allowed.
           if git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
+            | grep -zv 'package-lock\.json' \
             | xargs -0 -r grep -Pni 'github\.com/(?!Stellar-Governance-Guardians|script3|OpenZeppelin)' ; then
             echo "FAIL: non-org GitHub URL in tracked sources"; exit 1
           fi
