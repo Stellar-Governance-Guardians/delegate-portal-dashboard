@@ -3,8 +3,6 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Headers that keep the read-only dashboard safe to host anywhere. No keys,
-  // no server-side secrets: the app is a thin GraphQL/decode client.
   async headers() {
     return [
       {
@@ -22,7 +20,8 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data:",
-              "connect-src 'self'",
+              // Allow exact RPC host for /simulate tx-hash lookup; no wildcard.
+              "connect-src 'self' https://soroban-testnet.stellar.org",
               "object-src 'none'",
               "base-uri 'self'",
               "frame-ancestors 'none'",
