@@ -21,6 +21,7 @@ export default function StatusPage() {
 
   return (
     <div className="p-4">
+      <h1 className="text-2xl font-semibold">Status</h1>
       {health.ok ? (
         <div>
           {health.health?.lagLedgers !== undefined && health.health?.lagLedgers !== null && (

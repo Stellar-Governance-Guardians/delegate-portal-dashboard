@@ -25,8 +25,8 @@ test('status shows pins and an explicit indexer-unavailable reason', async ({ pa
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Status');
   await expect(page.getByRole('heading', { name: /indexer data unavailable/i })).toBeVisible();
   await expect(page.getByText(/INDEXER_URL is not set/)).toBeVisible();
-  await expect(page.getByText('0.1.0-alpha.1')).toBeVisible();
-  await expect(page.getByText('7b2eb9420f0cf0582d079f9603beb1e8548e1c7bac165724688cbae5b9237ecd')).toBeVisible();
+  await expect(page.getByText('0.1.0-alpha.2')).toBeVisible();
+  await expect(page.getByText('65193e43642f55abd083e2283aa5ed3caee5839c40a74c7b3f30398ea3ec0629')).toBeVisible();
 });
 
 test('the skip link targets the main landmark', async ({ page }) => {

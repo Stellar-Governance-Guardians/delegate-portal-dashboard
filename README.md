@@ -25,7 +25,7 @@ fallback data, and explicit unavailable-indexer states — 25 unit/component and
 **Not built:** proposal, delegate and impact pages, `graphql-codegen`, and
 event/transaction decode. See "Honest limitations".
 
-## Status: app scaffold + `/simulate` + `/status` — data pages not built
+## Status: read-only app scaffold with `/simulate`, `/status`, and explicit data-page states
 
 This repository contains the application scaffold (Next.js 16 App Router,
 strict TypeScript, Tailwind, Vitest, Playwright), the pinned interface
@@ -88,7 +88,7 @@ secrets via gitleaks).
 | Artifact | Pin | Verified by |
 |---|---|---|
 | GraphQL SDL `governance-v1` | `schema.lock` — parser commit `ba3bf1a3…`, sha256 `cfbd85a8…` | `npm run check:pins` |
-| Parser WASM `v0.1.0-alpha.1` | `parser.lock` — GitHub Release asset, sha256 `7b2eb942…` | `npm run check:pins`, `scripts/unpack-wasm.mjs` |
+| Parser WASM `v0.1.0-alpha.2` | `parser.lock` — GitHub Release asset, sha256 `65193e43…` | `npm run check:pins`, `scripts/unpack-wasm.mjs` |
 
 Committed cross-repo references are content pins only. Nothing in `app/`,
 `components/` or `lib/` reads a sibling repository by relative path.

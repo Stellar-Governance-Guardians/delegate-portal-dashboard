@@ -49,7 +49,7 @@ export default async function HomePage() {
           <li>
             Proposal, delegate and execution-impact pages need the indexer&apos;s decoded tables. The
             indexer currently stops at raw ingestion; its decode milestone waits on an event-normalization
-            export in the parser WASM that is not in <code>v0.1.0-alpha.1</code>.
+            export in the parser WASM that is not in <code>v0.1.0-alpha.2</code>.
           </li>
           <li>
             <code>/simulate</code> decodes a single ScVal today. Event XDR, transaction-hash lookup and

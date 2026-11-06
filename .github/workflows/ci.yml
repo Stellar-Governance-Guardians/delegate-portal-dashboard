@@ -49,13 +49,12 @@ jobs:
             | sed 's|https://api\.github\.com/repos/|https://github.com/|' \
             | grep -vE '^https?://github\.com/(Stellar-Governance-Guardians(/[A-Za-z0-9_.-]+)?|script3|OpenZeppelin)$' || true)
           if [ -n "$bad" ]; then echo "FAIL: non-org GitHub URLs:"; echo "$bad"; exit 1; fi
-      - name: no personal account names in tracked sources
+      - name: no personal GitHub URLs in tracked sources
         run: |
-          # Charter rule: no personal account names in tracked sources.
-          # Replaced personal GitHub usernames with org-namespace reference.
+          # Organization and documented upstream namespaces are allowed.
           if git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
-            | xargs -0 -r grep -niE 'Stellar-Governance-Guardians' ; then
-            echo "FAIL: personal account name in tracked sources"; exit 1
+            | xargs -0 -r grep -Pni 'github\.com/(?!Stellar-Governance-Guardians|script3|OpenZeppelin)' ; then
+            echo "FAIL: non-org GitHub URL in tracked sources"; exit 1
           fi
       # Charter rule 5: no secrets, full history + worktree.
       - name: gitleaks (no secrets, history + worktree)
