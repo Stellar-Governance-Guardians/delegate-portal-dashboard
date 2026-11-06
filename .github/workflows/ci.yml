@@ -1,6 +1,6 @@
 name: ci
 
-# PR gate: OFFLINE and deterministic. No live indexer, no testnet and no
+# PR gate: OFFLINE and deterministic. No live indexer, no testnet, and no
 # network fetch of pinned artifacts (they are vendored and hash-checked).
 on:
   pull_request:
