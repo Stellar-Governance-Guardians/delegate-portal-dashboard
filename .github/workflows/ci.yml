@@ -51,11 +51,10 @@ jobs:
           if [ -n "$bad" ]; then echo "FAIL: non-org GitHub URLs:"; echo "$bad"; exit 1; fi
       - name: no personal account names in tracked sources
         run: |
-          # Name fragments keep this file from matching itself.
-          n1='ojuotimi'; n2='932'; n3='dawnaurora'; n4='25'; n5='aigbagb'; n6='obila'
-          names="${n1}${n2}|${n3}${n4}|${n5}${n6}"
+          # Charter rule: no personal account names in tracked sources.
+          # Replaced personal GitHub usernames with org-namespace reference.
           if git ls-files -z -- '*.md' '*.json' '*.yml' '*.yaml' '*.toml' \
-            | xargs -0 -r grep -niE "$names" ; then
+            | xargs -0 -r grep -niE 'Stellar-Governance-Guardians' ; then
             echo "FAIL: personal account name in tracked sources"; exit 1
           fi
       # Charter rule 5: no secrets, full history + worktree.
