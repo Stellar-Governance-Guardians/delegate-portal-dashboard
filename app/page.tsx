@@ -35,8 +35,9 @@ export default async function HomePage() {
             parser WASM. No indexer needed, no network call.
           </li>
           <li>
-            <Link href="/status">/status</Link> — indexer health, schema pin and parser WASM pin, with the
-            exact reason when something is unavailable.
+            <Link href="/status">/status</Link> — indexer health, the decoded event list with its
+            VERIFIED / unverified decoding badge and live-vs-fixture provenance, plus the schema and
+            parser WASM pins, with the exact reason when something is unavailable.
           </li>
         </ul>
       </section>
@@ -47,13 +48,18 @@ export default async function HomePage() {
         </h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
           <li>
-            Proposal, delegate and execution-impact pages need the indexer&apos;s decoded tables. The
-            indexer currently stops at raw ingestion; its decode milestone waits on an event-normalization
-            export in the parser WASM that is not in <code>v0.1.0-alpha.2</code>.
+            <Link href="/proposal/1">/proposal/[id]</Link>, <Link href="/delegates">/delegates</Link>{' '}
+            and <Link href="/delegate/G">/delegate/[address]</Link> are explicit
+            &ldquo;unavailable&rdquo; stubs. The indexer&apos;s <code>proposal</code>,{' '}
+            <code>delegateMetrics</code> and <code>executionImpact</code> resolvers return an explicit
+            unavailable error because the decoded proposal, vote and delegate tables are not populated
+            yet. The indexer does persist decoded events, which <Link href="/status">/status</Link>{' '}
+            lists with their decoding status.
           </li>
           <li>
-            <code>/simulate</code> decodes a single ScVal today. Event XDR, transaction-hash lookup and
-            risk classification need the same unpublished parser surface.
+            <code>/simulate</code> decodes one pasted base64 ScVal locally in the browser. It does not
+            yet paste event XDR, look a transaction hash up on an RPC, or classify risk for a decoded
+            call — risk needs the target contract&apos;s spec, which this page does not collect.
           </li>
           <li>No wallet connection and no vote casting: this dashboard is read-only by charter.</li>
         </ul>
