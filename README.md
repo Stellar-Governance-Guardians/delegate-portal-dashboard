@@ -29,8 +29,9 @@ pinned WASM (no mock decode path), strict GraphQL response validation with no
 fallback data, and explicit unavailable-indexer states — 25 unit/component and
 4 Playwright tests, 7/7 README claims.
 
-**Not built:** proposal, delegate and impact pages, `graphql-codegen`, and
-event/transaction decode. See "Honest limitations".
+**Not built:** decoded proposal/delegate/impact data, `graphql-codegen`, and
+event/transaction decode. The routes exist as explicit unavailable states. See
+"Honest limitations".
 
 ## Status: read-only app scaffold with `/simulate`, `/status`, and explicit data-page states
 
@@ -41,13 +42,17 @@ artifacts, and two working surfaces:
 | Route | What it does | Depends on |
 |---|---|---|
 | `/simulate` | Decodes a pasted base64 XDR `ScVal` **locally in the browser** with the pinned `soroban-governance-wasm` build. Validates charset, length (64 KiB) and base64 framing; failures are shown verbatim. | parser WASM only |
-| `/status` | Shows the exact interface pins this build uses and the indexer's `indexerHealth`, including the machine-readable reason when it is unavailable. | `INDEXER_URL` |
+| `/status` | Shows the indexer's `indexerHealth`, the paginated decoded event list with its `VERIFIED` / unverified badge and provenance, and the exact interface pins this build uses — including the machine-readable reason when anything is unavailable. | `INDEXER_URL` |
 | `/` | Product summary, indexer health, and an explicit list of what is not built. | `INDEXER_URL` |
 
-Proposal, delegate and execution-impact pages are **not** built: they need the
-indexer's decoded tables, and the indexer stops at raw ingestion. Its decode
-milestone needs an event-normalization export in the parser WASM that does not
-exist in `v0.1.0-alpha.1`.
+`/proposal/[id]`, `/delegates` and `/delegate/[address]` are rendered as
+explicit unavailable states, not hidden and not faked: the indexer's `proposal`,
+`delegateMetrics` and `executionImpact` resolvers return an explicit
+"unavailable: decoded governance tables are not populated yet" error. The
+parser's event exports (`matches_event`, `normalize_event`, `decode_call`) ship
+in the pinned `v0.1.0-alpha.2`, and the indexer persists and serves decoded
+events; the missing piece is proposal/vote/delegate projection, not the WASM
+surface.
 
 ## Run it
 
@@ -133,18 +138,25 @@ turning missing data into zeros.
   transaction-hash lookup, proposal call decoding and risk classification all
   need parser WASM exports that are present in the pinned `v0.1.0-alpha.2`
   package but are not wired into this dashboard yet.
+- `/proposal/[id]`, `/delegates` and `/delegate/[address]` render unavailable
+  states. The indexer's `proposal`, `delegateMetrics` and `executionImpact`
+  resolvers return an explicit "unavailable: decoded governance tables are not
+  populated yet" error, so there is no proposal, vote tally, risk flag or
+  delegate ratio to display yet.
 - Codegen of typed GraphQL operations is deferred until the indexer exposes the
-  full schema; today the one query and its response shape are hand-written and
-  strictly validated in `lib/graphql.ts`.
+  full schema; today the two queries (`indexerHealth`, `events`) and their
+  response shapes are hand-written and strictly validated in `lib/graphql.ts`.
 - `/status` reads pins from the working tree (`parser.lock`, `schema.lock`) and
   shows them as build dependencies; it cannot prove what a *deployed* instance
   was built from.
 - Lighthouse accessibility scores have not been measured and are not claimed.
   The UI has landmarks, a skip link, visible focus, labelled controls, an
   `aria-live` result region and light/dark tokens; formal audit is pending.
-- End-to-end live-indexer coverage is still pending. The indexer now exposes a
-  read-only `/graphql` endpoint, but this repository's tests deliberately use an
-  unavailable-indexer scenario and do not claim a deployed integration.
+- End-to-end live-indexer coverage is still pending. `/status` now reads
+  `indexerHealth` and the paginated `events` connection, but CI exercises the
+  unavailable-indexer scenario only and no deployed integration is claimed.
+  `scripts/prove-dashboard.mjs` can be pointed at a running pair to check that
+  the rendered numbers match the GraphQL response.
 
 ## Contributing
 

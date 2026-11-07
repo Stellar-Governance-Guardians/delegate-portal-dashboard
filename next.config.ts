@@ -20,8 +20,12 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data:",
-              // Allow exact RPC host for /simulate tx-hash lookup; no wildcard.
-              "connect-src 'self' https://soroban-testnet.stellar.org",
+              // Deliberately 'self' only: /simulate decodes locally and makes no
+              // network call, and no page performs a tx-hash RPC lookup. When
+              // that lookup is implemented, widen this to exactly the RPC host
+              // in the same change and update every sentence that says
+              // /simulate is offline.
+              "connect-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
               "frame-ancestors 'none'",

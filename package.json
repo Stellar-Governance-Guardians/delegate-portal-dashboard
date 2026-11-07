@@ -25,7 +25,9 @@
     "pretest:unit": "node scripts/unpack-wasm.mjs",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "check:pins": "node scripts/check-pins.mjs"
+    "check:pins": "node scripts/check-pins.mjs",
+    "check:docs": "node scripts/check-doc-references.mjs",
+    "prove": "node scripts/prove-dashboard.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
