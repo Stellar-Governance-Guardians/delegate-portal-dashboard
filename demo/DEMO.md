@@ -49,8 +49,8 @@ DASHBOARD_URL=http://127.0.0.1:3000 \
 node scripts/prove-dashboard.mjs
 ```
 
-`scripts/prove-dashboard.mjs` fetches `indexerHealth` itself, formats the values
+`scripts/prove-dashboard.mjs` fetches `indexerHealth` and the event page itself, formats the values
 the way the server components do, and fails unless those exact strings appear in
 the rendered HTML. Its JSON output (`prove/dashboard-proof.json`, gitignored)
-is the traceable record for every number shown above. No video is committed to
+is the traceable record for every number and event row shown above. No video is committed to
 this repository.
