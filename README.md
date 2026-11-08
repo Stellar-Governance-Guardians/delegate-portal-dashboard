@@ -26,8 +26,8 @@ an indexer's freshness without connecting a wallet.
 
 **Proven (offline, machine-checked):** browser `ScVal` decoding through the real
 pinned WASM (no mock decode path), strict GraphQL response validation with no
-fallback data, and explicit unavailable-indexer states — 25 unit/component and
-4 Playwright tests, 7/7 README claims.
+fallback data, and explicit unavailable-indexer states — unit/component tests
+and Playwright specs, 7/7 README claims.
 
 **Not built:** decoded proposal/delegate/impact data, `graphql-codegen`, and
 event/transaction decode. The routes exist as explicit unavailable states. See
@@ -42,7 +42,7 @@ artifacts, and two working surfaces:
 | Route | What it does | Depends on |
 |---|---|---|
 | `/simulate` | Decodes a pasted base64 XDR `ScVal` **locally in the browser** with the pinned `soroban-governance-wasm` build. Validates charset, length (64 KiB) and base64 framing; failures are shown verbatim. | parser WASM only |
-| `/status` | Shows the indexer's `indexerHealth`, the paginated decoded event list with its `VERIFIED` / unverified badge and provenance, and the exact interface pins this build uses — including the machine-readable reason when anything is unavailable. | `INDEXER_URL` |
+| `/status` | Shows the indexer's `indexerHealth`, the decoded event list (first page of 50, oldest first) with its `VERIFIED` / unverified badge, provenance, transaction hash and contract id, and the exact interface pins this build uses — including the machine-readable reason when anything is unavailable. | `INDEXER_URL` |
 | `/` | Product summary, indexer health, and an explicit list of what is not built. | `INDEXER_URL` |
 
 `/proposal/[id]`, `/delegates` and `/delegate/[address]` are rendered as
@@ -82,7 +82,7 @@ and no silent zero.
 ```bash
 npm run typecheck     # tsc --noEmit (strict, noUncheckedIndexedAccess)
 npm run lint          # eslint (Next core-web-vitals + no-fixture-imports)
-npm run test:unit     # Vitest: 25 tests (unit + component)
+npm run test:unit     # Vitest: unit + component suites
 npm run test:e2e      # Playwright against `next build && next start`
 npm run check:pins    # sha256 of the vendored WASM + SDL vs the lock files
 bash scripts/check-claims.sh   # machine-checks the claims made in this README
