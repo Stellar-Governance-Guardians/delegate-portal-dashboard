@@ -1,11 +1,39 @@
 # Delegate Portal Dashboard
 
-[![CI](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<p align="center">
+  <b>Read Soroban governance without connecting a wallet.</b><br>
+  Decode payloads in the browser with the pinned parser WASM, and read indexer health exactly as the API returned it.
+</p>
+<p align="center">
+  <a href="https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml"><img src="https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
+<p align="center">
+  <a href="https://stellar-governance-guardians.github.io/soroban-governance-parser/"><strong>Documentation</strong></a> ·
+  <a href="#run-it"><strong>Quick start</strong></a> ·
+  <a href="#interface-pins-d1"><strong>Pins</strong></a> ·
+  <a href="https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues"><strong>Issues</strong></a>
+</p>
 
-Maintained by [Stellar Governance Guardians](https://github.com/Stellar-Governance-Guardians).
-Use [GitHub Issues](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues)
-for project discussion, bug reports, and contribution requests.
+> [!IMPORTANT]
+> **Read-only, and explicit about what is missing.** The app holds no wallet, no keys and no
+> secrets. Decoded proposals, delegate metrics and execution impact are not built; those routes
+> render explicit unavailable states rather than sample data. A missing or broken indexer is an
+> error state, never an empty table.
+
+| | |
+|---|---|
+| What it is | Next.js 16 read-only dashboard for Soroban governance on Stellar |
+| Working routes | `/` (summary + health), `/simulate` (in-browser decode), `/status` (health, decoded events, pins) |
+| Unavailable routes | `/proposal/[id]`, `/delegates`, `/delegate/[address]` — explicit, not faked |
+| Data source | `governance-event-indexer` GraphQL via `INDEXER_URL`; unset or unreachable is an error state |
+| Pins | parser WASM `v0.1.0-alpha.2` and SDL `governance-v1`, hash-checked offline |
+| Tests | Vitest unit/component suites against the real pinned WASM, plus Playwright |
+| Documentation | <https://stellar-governance-guardians.github.io/soroban-governance-parser/> |
+| Suite | [parser](https://github.com/Stellar-Governance-Guardians/soroban-governance-parser) → [indexer](https://github.com/Stellar-Governance-Guardians/governance-event-indexer) → [dashboard](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard) |
+| License | [MIT](LICENSE) |
+
+## Overview
 
 Read-only delegate and governance dashboard for Soroban DAOs on Stellar: decode
 raw governance payloads in your browser with the pinned parser WASM, and read
@@ -165,10 +193,24 @@ static checks and unit tests locally, keep the app read-only, and update the
 pin and claims files when an interface artifact changes. Report security issues
 through [SECURITY.md](SECURITY.md), not a public issue.
 
-## Community and contributors
+## 🤝 Community & maintainers
 
-Project discussion happens in [GitHub Issues](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues)
-and pull requests.
+Join the discussion and get support:
+
+- **Telegram**: [t.me/+OmwD30ukO0wzZWU0](https://t.me/+OmwD30ukO0wzZWU0)
+- **Discord**: [discord.gg/UPbr5FFjX](https://discord.gg/UPbr5FFjX)
+- **Issues and task work**: [delegate-portal-dashboard issues](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/issues)
+- **Documentation hub**: <https://stellar-governance-guardians.github.io/soroban-governance-parser/>
+- **The other repositories**: [soroban-governance-parser](https://github.com/Stellar-Governance-Guardians/soroban-governance-parser)
+  (decoding) and [governance-event-indexer](https://github.com/Stellar-Governance-Guardians/governance-event-indexer)
+  (indexing and GraphQL)
+
+| Maintainer | Role | Scope |
+|---|---|---|
+| [Stellar-Governance-Guardians](https://github.com/Stellar-Governance-Guardians) | Organization maintainers | Everything, via [CODEOWNERS](.github/CODEOWNERS) |
+
+The project is maintained in the organization namespace; personal accounts are not contact
+points for this repository.
 
 [![Contributors](https://contrib.rocks/image?repo=Stellar-Governance-Guardians/delegate-portal-dashboard)](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/graphs/contributors)
 
