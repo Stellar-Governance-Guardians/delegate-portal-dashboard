@@ -29,6 +29,25 @@ test('status shows pins and an explicit indexer-unavailable reason', async ({ pa
   await expect(page.getByText('65193e43642f55abd083e2283aa5ed3caee5839c40a74c7b3f30398ea3ec0629')).toBeVisible();
 });
 
+test('proposal review asks for the governor instead of assuming one', async ({ page }) => {
+  await page.goto('/proposal/7');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Proposal 7');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText(
+    'A governor contract is required',
+  );
+});
+
+test('proposal review distinguishes an unreachable indexer from a missing proposal', async ({
+  page,
+}) => {
+  await page.goto(
+    '/proposal/7?governor=CCKGJBCBBYNWCMSBPV67DFIG3OL72RLDKNGHWJQCR5NASAUHOQRNLEDX',
+  );
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('INDEXER_URL is not set');
+  await expect(page.getByText(/not because it does not exist/)).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(0);
+});
+
 test('the skip link targets the main landmark', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');

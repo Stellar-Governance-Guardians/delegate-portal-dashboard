@@ -17,15 +17,15 @@
 
 > [!IMPORTANT]
 > **Read-only, and explicit about what is missing.** The app holds no wallet, no keys and no
-> secrets. Decoded proposals, delegate metrics and execution impact are not built; those routes
-> render explicit unavailable states rather than sample data. A missing or broken indexer is an
-> error state, never an empty table.
+> secrets. Proposal review renders the indexer's projected calls and risk classifications;
+> delegate metrics and execution impact are not built and render explicit unavailable states
+> rather than sample data. A missing or broken indexer is an error state, never an empty table.
 
 | | |
 |---|---|
 | What it is | Next.js 16 read-only dashboard for Soroban governance on Stellar |
-| Working routes | `/` (summary + health), `/simulate` (in-browser decode), `/status` (health, decoded events, pins) |
-| Unavailable routes | `/proposal/[id]`, `/delegates`, `/delegate/[address]` — explicit, not faked |
+| Working routes | `/` (summary + health), `/simulate` (in-browser decode), `/status` (health, decoded events, pins), `/proposal/[id]?governor=<contract>` (projected calls + risk) |
+| Unavailable routes | `/delegates`, `/delegate/[address]` — explicit, not faked |
 | Data source | `governance-event-indexer` GraphQL via `INDEXER_URL`; unset or unreachable is an error state |
 | Pins | parser WASM `v0.1.0-alpha.2` and SDL `governance-v1`, hash-checked offline |
 | Tests | Vitest unit/component suites against the real pinned WASM, plus Playwright |
@@ -55,10 +55,10 @@ an indexer's freshness without connecting a wallet.
 **Proven (offline, machine-checked):** browser `ScVal` decoding through the real
 pinned WASM (no mock decode path), strict GraphQL response validation with no
 fallback data, and explicit unavailable-indexer states — unit/component tests
-and Playwright specs, 7/7 README claims.
+and Playwright specs, 8/8 README claims.
 
-**Not built:** decoded proposal/delegate/impact data, `graphql-codegen`, and
-event/transaction decode. The routes exist as explicit unavailable states. See
+**Not built:** delegate metrics, execution impact, `graphql-codegen`, and
+event/transaction decode. Those routes exist as explicit unavailable states. See
 "Honest limitations".
 
 ## Status: read-only app scaffold with `/simulate`, `/status`, and explicit data-page states
@@ -71,16 +71,19 @@ artifacts, and two working surfaces:
 |---|---|---|
 | `/simulate` | Decodes a pasted base64 XDR `ScVal` **locally in the browser** with the pinned `soroban-governance-wasm` build. Validates charset, length (64 KiB) and base64 framing; failures are shown verbatim. | parser WASM only |
 | `/status` | Shows the indexer's `indexerHealth`, the decoded event list (first page of 50, oldest first) with its `VERIFIED` / unverified badge, provenance, transaction hash and contract id, and the exact interface pins this build uses — including the machine-readable reason when anything is unavailable. | `INDEXER_URL` |
+| `/proposal/[id]` | Runs the indexer's `proposal(proposalId, governorContract)` query and renders the projected calls: target, function, positional arguments, decoding badge, risk tier and the exact matched rule. Distinct states for a read error, an unprojected proposal, and a proposal whose action could not be decoded. | `INDEXER_URL` + `?governor=` or `GOVERNOR_CONTRACT_ID` |
 | `/` | Product summary, indexer health, and an explicit list of what is not built. | `INDEXER_URL` |
 
-`/proposal/[id]`, `/delegates` and `/delegate/[address]` are rendered as
-explicit unavailable states, not hidden and not faked: the indexer's `proposal`,
-`delegateMetrics` and `executionImpact` resolvers return an explicit
-"unavailable: decoded governance tables are not populated yet" error. The
-parser's event exports (`matches_event`, `normalize_event`, `decode_call`) ship
-in the pinned `v0.1.0-alpha.2`, and the indexer persists and serves decoded
-events; the missing piece is proposal/vote/delegate projection, not the WASM
-surface.
+`/proposal/[id]` is backed by the indexer's `proposal` field: the page asks for
+one (governor contract, proposal id) pair and renders the projected calls and
+their parser-assigned risk. It requires the governor contract because the same
+numeric id exists on every governor — pass `?governor=<contract id>` or set
+`GOVERNOR_CONTRACT_ID`. A missing governor, an unreachable indexer and an
+unprojected proposal are three distinct, explicit states; none of them renders
+a sample proposal. `/delegates` and `/delegate/[address]` remain unavailable
+because the indexer's `delegateMetrics` resolver is not populated. The parser's
+event exports ship in the pinned `v0.1.0-alpha.2`; the indexer now projects
+`proposal_created`; votes, tallies and delegate metrics remain open.
 
 ## Run it
 
@@ -98,8 +101,13 @@ To show indexer data, point the dashboard at a running
 GraphQL endpoint:
 
 ```bash
-INDEXER_URL=http://127.0.0.1:4000/graphql npm run dev
+INDEXER_URL=http://127.0.0.1:4000/graphql \
+GOVERNOR_CONTRACT_ID=CCKGJBCBBYNWCMSBPV67DFIG3OL72RLDKNGHWJQCR5NASAUHOQRNLEDX \
+npm run dev
 ```
+
+`GOVERNOR_CONTRACT_ID` is only needed by `/proposal/[id]`; an explicit
+`?governor=` query parameter overrides it.
 
 If `INDEXER_URL` is unset or unreachable, every data surface shows an explicit
 error with the reason. There is no bundled sample dataset, no cached fallback
@@ -162,15 +170,19 @@ turning missing data into zeros.
 
 ## Honest limitations
 
-- Only `decode_scval_base64` from the pinned WASM is used. Event XDR,
-  transaction-hash lookup, proposal call decoding and risk classification all
-  need parser WASM exports that are present in the pinned `v0.1.0-alpha.2`
-  package but are not wired into this dashboard yet.
-- `/proposal/[id]`, `/delegates` and `/delegate/[address]` render unavailable
-  states. The indexer's `proposal`, `delegateMetrics` and `executionImpact`
-  resolvers return an explicit "unavailable: decoded governance tables are not
-  populated yet" error, so there is no proposal, vote tally, risk flag or
-  delegate ratio to display yet.
+- Only `decode_scval_base64` from the pinned WASM is used directly in the
+  browser. Proposal calls and risk are rendered from the indexer's stored
+  projection, not re-decoded client-side; event XDR and transaction-hash lookup
+  are not wired into this dashboard yet.
+- `/proposal/[id]` shows proposals the indexer has projected. With today's
+  committed corpus that means verified `proposal_created` events; the replay
+  fixture comes from the fixture governor, which the pinned adapter does not
+  claim, so a local replay produces no proposal rows. The page states that
+  explicitly rather than falling back to raw events.
+- `/delegates` and `/delegate/[address]` render unavailable states. The
+  indexer's `delegateMetrics` and `executionImpact` resolvers return an explicit
+  "unavailable: decoded governance tables are not populated yet" error, so there
+  is no vote tally, delegate ratio or impact estimate to display yet.
 - Codegen of typed GraphQL operations is deferred until the indexer exposes the
   full schema; today the two queries (`indexerHealth`, `events`) and their
   response shapes are hand-written and strictly validated in `lib/graphql.ts`.
@@ -207,10 +219,10 @@ Join the discussion and get support:
 
 | Maintainer | Role | Scope |
 |---|---|---|
-| [Stellar-Governance-Guardians](https://github.com/Stellar-Governance-Guardians) | Organization maintainers | Everything, via [CODEOWNERS](.github/CODEOWNERS) |
+| Organization maintainers | Project direction and maintainer contact | Code ownership remains via [CODEOWNERS](.github/CODEOWNERS) |
 
-The project is maintained in the organization namespace; personal accounts are not contact
-points for this repository.
+The repository is maintained in the `Stellar-Governance-Guardians` organization.
+Maintainer contact is through the organization's issues and discussions.
 
 [![Contributors](https://contrib.rocks/image?repo=Stellar-Governance-Guardians/delegate-portal-dashboard)](https://github.com/Stellar-Governance-Guardians/delegate-portal-dashboard/graphs/contributors)
 
