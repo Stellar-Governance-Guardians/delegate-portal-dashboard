@@ -16,6 +16,14 @@
       }
     },
     {
+      "id": "proposal-page-reads-indexer",
+      "claim": "/proposal/[id] reads the indexer's proposal field and renders calls, risk and explicit error/unprojected states",
+      "statedIn": ["README.md"],
+      "check": {
+        "cmd": "grep -q 'loadProposal' 'app/proposal/[id]/page.tsx' && grep -q 'ProposalPanel' 'app/proposal/[id]/page.tsx' && test -s components/proposal-panel.tsx && npx vitest run tests/unit/proposal.test.ts tests/component/proposal-panel.test.tsx"
+      }
+    },
+    {
       "id": "pins-verified",
       "claim": "the vendored parser WASM tarball and GraphQL SDL hash exactly as parser.lock and schema.lock say",
       "statedIn": ["README.md"],
